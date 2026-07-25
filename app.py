@@ -12,6 +12,13 @@ MIN_CLIP = 15
 MAX_CLIP = 60
 DEFAULT_CLIP = 30
 
+# YouTube's "web" client increasingly demands a sign-in / PO token check
+# ("Sign in to confirm you're not a bot"), which fails from cloud IPs with
+# no logged-in session. The android/tv embedded clients skip that check.
+YOUTUBE_CLIENT_OPTS = {
+    "extractor_args": {"youtube": {"player_client": ["android", "tv", "web"]}},
+}
+
 PAGE = """<!doctype html>
 <html lang="tr">
 <head>
@@ -60,7 +67,12 @@ PAGE = """<!doctype html>
 
 
 def get_info(url):
-    ydl_opts = {"quiet": True, "skip_download": True, "no_warnings": True}
+    ydl_opts = {
+        "quiet": True,
+        "skip_download": True,
+        "no_warnings": True,
+        **YOUTUBE_CLIENT_OPTS,
+    }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         return ydl.extract_info(url, download=False)
 
@@ -135,6 +147,7 @@ def clip():
         "force_keyframes_at_cuts": True,
         "outtmpl": os.path.join(workdir, "clip.%(ext)s"),
         "merge_output_format": "mp4",
+        **YOUTUBE_CLIENT_OPTS,
     }
 
     try:
